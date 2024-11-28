@@ -1,5 +1,6 @@
 package com.bank.creditservice.model.dto.request;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -8,7 +9,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ChargeRequest extends TransactionRequest {
-    private String creditCardId;
+    @NotNull
+    private String creditCardNumber;
 
     public ChargeRequest(Double amount) {
         super(amount);

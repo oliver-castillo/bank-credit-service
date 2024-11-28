@@ -1,6 +1,5 @@
 package com.bank.creditservice.model.dto.request;
 
-import com.bank.creditservice.model.enums.ClientType;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,6 +14,4 @@ public class CreditCardRequest {
 
     @NotNull
     private Double creditLimit;
-
-    private ClientType clientType;
 }

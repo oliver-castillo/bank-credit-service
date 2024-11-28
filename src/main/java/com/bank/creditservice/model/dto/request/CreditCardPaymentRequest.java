@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class CreditCardPaymentRequest extends TransactionRequest {
     @NotNull
-    private String creditCardId;
+    private String creditCardNumber;
 
     public CreditCardPaymentRequest(Double amount) {
         super(amount);

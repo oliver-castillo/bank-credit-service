@@ -11,5 +11,5 @@ public class CreditCardPayment extends Transaction {
         super(TransactionType.CREDIT_CARD_PAYMENT);
     }
 
-    private String creditCardId;
+    private String creditCardNumber;
 }

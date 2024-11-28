@@ -1,6 +1,5 @@
 package com.bank.creditservice.model.document;
 
-import com.bank.creditservice.model.enums.ClientType;
 import com.bank.creditservice.model.enums.CreditCardStatus;
 import com.bank.creditservice.util.Generator;
 import lombok.Getter;
@@ -19,20 +18,24 @@ public class CreditCard {
     private String clientId;
     private String cardNumber;
     private String cvv;
-    private ClientType clientType;
     private CreditCardStatus status;
     private Double creditLimit;
-    private Double balanceToPay;
     private LocalDate expirationDate;
     private Boolean isEnabled;
 
-    public CreditCard(double creditLimit) {
-        this.creditLimit = creditLimit;
-        this.balanceToPay = creditLimit;
+    public CreditCard() {
         this.cardNumber = Generator.generateCardNumber();
         this.cvv = Generator.generateCvv();
         this.expirationDate = LocalDate.now().plusYears(1);
         this.isEnabled = true;
-        this.status = CreditCardStatus.ACTIVE;
+        this.status = CreditCardStatus.UNPAID;
+    }
+
+    public CreditCardStatus checkStatus(double totalChargeAmount) {
+        return creditLimit == totalChargeAmount ? CreditCardStatus.PAID : CreditCardStatus.UNPAID;
+    }
+
+    public boolean canAddCharge(double existentCharge, double newCharge) {
+        return creditLimit >= existentCharge + newCharge && newCharge > 0;
     }
 }

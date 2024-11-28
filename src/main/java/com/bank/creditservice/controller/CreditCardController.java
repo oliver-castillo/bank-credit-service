@@ -3,7 +3,6 @@ package com.bank.creditservice.controller;
 import com.bank.creditservice.model.dto.request.CreditCardRequest;
 import com.bank.creditservice.model.dto.response.CreditCardResponse;
 import com.bank.creditservice.model.dto.response.OperationResponse;
-import com.bank.creditservice.model.enums.ClientType;
 import com.bank.creditservice.service.CreditCardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +15,9 @@ import reactor.core.publisher.Mono;
 public class CreditCardController {
     private final CreditCardService creditCardService;
 
-    @PostMapping(value = "credit-card/{clientType}")
+    @PostMapping(value = "credit-card")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<OperationResponse> save(@PathVariable String clientType, @RequestBody @Valid CreditCardRequest request) {
-        request.setClientType(ClientType.fromString(clientType));
+    public Mono<OperationResponse> save(@RequestBody @Valid CreditCardRequest request) {
         return creditCardService.save(request);
     }
 
