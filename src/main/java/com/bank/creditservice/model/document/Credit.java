@@ -7,46 +7,35 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
 @Document(collection = "credits")
 public class Credit {
     @Id
     private String id;
-
     private String clientId;
-
-    private double amount;
-
-    private double interestRate; // Tasa de interés anual en porcentaje
-
-    private LocalDate grantDate;
-
-    private LocalDate dueDate;
-
+    private Double amount;
+    private Double annualInterestRate; // Tasa de interés anual en porcentaje
     private ClientType clientType; // PERSONAL - BUSINESS
-
     private CreditStatus status;
+    private Integer numberOfPayments;
 
-    private double remainingPayment;
-
-    private double latePaymentInterestRate;
-
-    public Credit(double amount) {
-        this.amount = amount;
-        this.remainingPayment = amount;
+    public Credit(Double amount) {
+        this.amount = Math.round(amount * 100.00) / 100.00;
         this.status = CreditStatus.ACTIVE;
     }
 
-    public double calculateInterest() {
-        return (interestRate / 12) * remainingPayment / 100;
+    public Double calculateInterest() {
+        return Math.round((annualInterestRate / 12 * amount / 100) * 100.0) / 100.0;
     }
 
-    public double calculateLatePaymentInterest() {
-        return dueDate.isAfter(LocalDate.now())
-                ? (latePaymentInterestRate / 12) * remainingPayment / 100
-                : 0;
+    public Double calculateMonthlyPaymentAmount() {
+        double result = (amount / numberOfPayments) + calculateInterest();
+        return Math.round(result * 100.0) / 100.0;
+    }
+
+
+    public CreditStatus checkStatus(Integer paymentsMade) {
+        return paymentsMade > 0 ? CreditStatus.ACTIVE : CreditStatus.PAID;
     }
 }

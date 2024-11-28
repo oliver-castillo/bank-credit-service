@@ -1,17 +1,17 @@
 package com.bank.creditservice.model.dto.response;
 
-import java.time.LocalDate;
+import com.bank.creditservice.model.enums.ClientType;
 
-public record CreditResponse(
+public record CreditCardResponse(
         String id,
         String clientId,
         String cardNumber,
         String cvv,
-        String clientType,
+        ClientType clientType,
         String status,
         Double creditLimit,
         Double balanceToPay,
-        LocalDate expirationDate,
+        String expirationDate,
         Boolean isEnabled
 ) {
 }

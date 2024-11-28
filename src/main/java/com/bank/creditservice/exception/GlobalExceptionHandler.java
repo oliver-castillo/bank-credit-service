@@ -2,7 +2,6 @@ package com.bank.creditservice.exception;
 
 import com.bank.creditservice.model.dto.response.OperationResponse;
 import com.bank.creditservice.util.ResponseMessage;
-import jakarta.ws.rs.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,12 +22,6 @@ public class GlobalExceptionHandler {
     public Mono<ResponseEntity<OperationResponse>> handleAlreadyExistsException(AlreadyExistsException e) {
         log.error("Exception occurred: {}", e.getMessage());
         return Mono.just(new ResponseEntity<>(new OperationResponse(e.getMessage(), HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST));
-    }
-
-    @ExceptionHandler(InternalServerError.class)
-    public Mono<ResponseEntity<OperationResponse>> handleInternalServerError(InternalServerError e) {
-        log.error("Exception occurred: {}", e.getMessage());
-        return Mono.just(new ResponseEntity<>(new OperationResponse(e.getMessage(), HttpStatus.BAD_REQUEST), HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
     @ExceptionHandler(NotFoundException.class)

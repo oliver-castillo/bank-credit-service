@@ -9,6 +9,7 @@ import com.bank.creditservice.model.dto.response.OperationResponse;
 import com.bank.creditservice.model.enums.ClientType;
 import com.bank.creditservice.model.enums.CreditStatus;
 import com.bank.creditservice.repository.CreditRepository;
+import com.bank.creditservice.repository.TransactionRepository;
 import com.bank.creditservice.util.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +22,14 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Service
 public class DefaultCreditService implements CreditService {
-    private final CreditRepository repository;
+    private final CreditRepository creditRepository;
+    private final TransactionRepository transactionRepository;
     private final CreditMapper mapper;
 
     @Override
     public Mono<OperationResponse> save(CreditRequest request) {
         return validateRequest(request)
-                .flatMap(valid -> repository.save(mapper.toDocument(request))
+                .flatMap(valid -> creditRepository.save(mapper.toDocument(request))
                         .map(document -> new OperationResponse(
                                 ResponseMessage.CREATED_SUCCESSFULLY,
                                 HttpStatus.CREATED)));
@@ -35,21 +37,21 @@ public class DefaultCreditService implements CreditService {
 
     @Override
     public Mono<CreditResponse> findById(String id) {
-        return repository.findById(id)
+        return creditRepository.findById(id)
                 .map(mapper::toResponse)
                 .switchIfEmpty(Mono.error(new NotFoundException("No se encontró el registro")));
     }
 
     @Override
     public Flux<CreditResponse> findByClientId(String clientId) {
-        return repository.findByClientId(clientId)
+        return creditRepository.findByClientId(clientId)
                 .map(mapper::toResponse)
                 .switchIfEmpty(Flux.error(new NotFoundException("No se encontraron registros")));
     }
 
     @Override
     public Flux<CreditResponse> findAll() {
-        return repository.findAll()
+        return creditRepository.findAll()
                 .map(mapper::toResponse)
                 .switchIfEmpty(Flux.error(new NotFoundException("No se encontraron registros")));
     }
@@ -58,7 +60,7 @@ public class DefaultCreditService implements CreditService {
         if (request.getClientType() == ClientType.BUSINESS) {
             return Mono.just(true);
         } else {
-            return repository.findByClientId(request.getClientId())
+            return creditRepository.findByClientId(request.getClientId())
                     .filter(credit -> credit.getClientType() == ClientType.PERSONAL
                             && credit.getStatus() == CreditStatus.ACTIVE)
                     .count()

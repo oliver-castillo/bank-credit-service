@@ -1,24 +1,22 @@
 package com.bank.creditservice.model.document;
 
-import lombok.AllArgsConstructor;
+import com.bank.creditservice.model.enums.TransactionType;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@AllArgsConstructor
 @Getter
 @Setter
-public class Transaction {
+@Document(collection = "transactions")
+public abstract class Transaction {
     @Id
     private String id;
-
-    private String type = "CREDIT_PAYMENT";
-
-    private String creditId;
-
+    private TransactionType type;
     private String clientId;
+    private Double amount;
 
-    private double amount;
-
-    private String interest;
+    public Transaction(TransactionType type) {
+        this.type = type;
+    }
 }
