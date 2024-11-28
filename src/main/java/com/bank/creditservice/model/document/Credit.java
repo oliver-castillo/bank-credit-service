@@ -7,6 +7,8 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @Document(collection = "credits")
@@ -36,6 +38,6 @@ public class Credit {
 
 
     public CreditStatus checkStatus(Integer paymentsMade) {
-        return paymentsMade > 0 ? CreditStatus.ACTIVE : CreditStatus.PAID;
+        return Objects.equals(paymentsMade, numberOfPayments) ? CreditStatus.PAID : CreditStatus.ACTIVE;
     }
 }

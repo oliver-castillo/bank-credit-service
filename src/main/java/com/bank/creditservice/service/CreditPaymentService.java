@@ -26,78 +26,59 @@ public class CreditPaymentService implements TransactionService<CreditPaymentReq
 
     @Override
     public Mono<OperationResponse> makeTransaction(CreditPaymentRequest request) {
-        return makeCreditPayment(request)
-                .doOnSuccess(transaction -> log.info("Se registró el pago"))
-                .then(Mono.fromCallable(() -> new OperationResponse(
+        return validateAndProcessPayment(request)
+                .flatMap(credit -> updateCreditStatus(credit, request.getCreditId()))
+                .then(Mono.just(new OperationResponse(
                         ResponseMessage.CREATED_SUCCESSFULLY,
                         HttpStatus.CREATED)));
     }
 
-    public Mono<Void> makeCreditPayment(CreditPaymentRequest request) {
-        /*return creditRepository.findByClientId(request.getClientId())
+    private Mono<Credit> validateAndProcessPayment(CreditPaymentRequest request) {
+        return findAndValidateCredit(request)
+                .zipWith(getNumberOfPaymentsMade(request.getCreditId()))
+                .flatMap(tuple -> processPayment(tuple.getT1(), tuple.getT2(), request));
+    }
+
+    private Mono<Credit> findAndValidateCredit(CreditPaymentRequest request) {
+        return creditRepository.findByClientId(request.getClientId())
                 .switchIfEmpty(Mono.error(new BadRequestException("No se encontraron créditos asignados al cliente")))
-                .filter(data -> data.getStatus() == CreditStatus.ACTIVE)
+                .filter(credit -> credit.getStatus() == CreditStatus.ACTIVE && credit.getId().equals(request.getCreditId()))
                 .switchIfEmpty(Mono.error(new BadRequestException("El cliente no cuenta con créditos activos")))
-                .filter(credit -> credit.getId().equals(request.getCreditId()))
-                .switchIfEmpty(Mono.error(new BadRequestException("No se encontró el crédito"))).single()
-                .flatMap(credit -> {
-                    if (credit.getStatus() == CreditStatus.PAID) {
-                        return Mono.error(new BadRequestException("El crédito ya fue pagado"));
-                    }
+                .single();
+    }
 
-                    double monthlyPaymentAmount = credit.calculateMonthlyPaymentAmount();
-                    double paymentAmount = request.getAmount();
+    private Mono<Integer> getNumberOfPaymentsMade(String creditId) {
+        return transactionRepository.findAll()
+                .ofType(CreditPayment.class)
+                .filter(payment -> payment.getCreditId().equals(creditId))
+                .count()
+                .map(Long::intValue);
+    }
 
-                    if (paymentAmount != monthlyPaymentAmount) {
-                        return Mono.error(new BadRequestException("El monto de pago mensual debe ser: S/. " + monthlyPaymentAmount));
-                    }
+    private Mono<Credit> processPayment(Credit credit, int paymentsMade, CreditPaymentRequest request) {
+        if (paymentsMade >= credit.getNumberOfPayments()) {
+            return Mono.error(new BadRequestException("Se realizaron todos los pagos"));
+        }
 
-                    double interest = credit.calculateInterest();
+        double monthlyPayment = credit.calculateMonthlyPaymentAmount();
+        if (request.getAmount() != monthlyPayment) {
+            return Mono.error(new BadRequestException("El monto de pago mensual debe ser: S/. " + monthlyPayment));
+        }
 
-                    credit.setStatus(credit.checkStatus());
+        CreditPayment payment = transactionMapper.toDocument(request);
+        payment.setInterest(credit.calculateInterest());
 
-                    return creditRepository.save(credit).then(Mono.just(interest));
-                });*/
-        Mono<Credit> foundCredit = creditRepository.findByClientId(request.getClientId())
-                .switchIfEmpty(Mono.error(new BadRequestException("No se encontraron créditos asignados al cliente")))
-                .filter(data -> data.getStatus() == CreditStatus.ACTIVE)
-                .switchIfEmpty(Mono.error(new BadRequestException("El cliente no cuenta con créditos activos")))
-                .filter(c -> c.getId().equals(request.getCreditId()))
-                .switchIfEmpty(Mono.error(new BadRequestException("No se encontró el crédito"))).single();
+        return transactionRepository.save(payment)
+                .thenReturn(credit);
+    }
 
-        Mono<Long> numberOfPaymentsMade = transactionRepository.findAll()
-                .map(CreditPayment.class::cast)
-                .filter(transaction -> transaction.getCreditId().equals(request.getCreditId()))
-                .count();
-
-        return Mono.zip(foundCredit, numberOfPaymentsMade)
-                .flatMap(tuple -> {
-                    Credit credit = tuple.getT1();
-                    int paymentsMade = (int) (long) tuple.getT2();
-
-                    double monthlyPaymentAmount = credit.calculateMonthlyPaymentAmount();
-                    double paymentAmount = request.getAmount();
-                    double interest = credit.calculateInterest();
-
-                    if (paymentsMade == credit.getNumberOfPayments()) {
-                        return Mono.error(new BadRequestException("Se realizaron todos los pagos"));
-                    }
-
-                    if (paymentAmount != monthlyPaymentAmount) {
-                        return Mono.error(new BadRequestException("El monto de pago mensual debe ser: S/. " + monthlyPaymentAmount));
-                    }
-
-                    CreditPayment mappedCredit = transactionMapper.toDocument(request);
-                    mappedCredit.setInterest(interest);
-
-                    return transactionRepository.save(mappedCredit).then(Mono.just(credit));
-                }).zipWith(numberOfPaymentsMade).flatMap(
-                        tuple -> {
-                            Credit credit = tuple.getT1();
-                            int paymentsMade = (int) (long) tuple.getT2();
-                            credit.setStatus(credit.checkStatus(paymentsMade));
-                            return creditRepository.save(credit).then();
-                        }
-                );
+    private Mono<Credit> updateCreditStatus(Credit credit, String creditId) {
+        return getNumberOfPaymentsMade(creditId)
+                .map(paymentsMade -> {
+                    credit.setStatus(credit.checkStatus(paymentsMade));
+                    return credit;
+                })
+                .flatMap(creditRepository::save)
+                .doOnSuccess(c -> log.info("Se actualizó el estado del crédito después del pago"));
     }
 }
