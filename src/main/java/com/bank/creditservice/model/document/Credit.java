@@ -19,12 +19,12 @@ public class Credit {
     private Double amount;
     private Double annualInterestRate; // Tasa de interés anual en porcentaje
     private ClientType clientType; // PERSONAL - BUSINESS
-    private CreditStatus status;
+    private CreditStatus creditStatus;
     private Integer numberOfPayments;
 
     public Credit(Double amount) {
         this.amount = Math.round(amount * 100.00) / 100.00;
-        this.status = CreditStatus.ACTIVE;
+        this.creditStatus = CreditStatus.ACTIVE;
     }
 
     public Double calculateInterest() {

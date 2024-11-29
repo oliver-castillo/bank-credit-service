@@ -1,4 +1,4 @@
-package com.bank.creditservice.service;
+package com.bank.creditservice.service.implementation;
 
 import com.bank.creditservice.exception.BadRequestException;
 import com.bank.creditservice.mapper.TransactionMapper;
@@ -9,6 +9,7 @@ import com.bank.creditservice.model.dto.response.OperationResponse;
 import com.bank.creditservice.model.enums.CreditStatus;
 import com.bank.creditservice.repository.CreditRepository;
 import com.bank.creditservice.repository.TransactionRepository;
+import com.bank.creditservice.service.TransactionService;
 import com.bank.creditservice.util.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,16 @@ public class CreditPaymentService implements TransactionService<CreditPaymentReq
                         HttpStatus.CREATED)));
     }
 
+    @Override
+    public TransactionRepository getTransactionRepository() {
+        return transactionRepository;
+    }
+
+    @Override
+    public TransactionMapper getTransactionMapper() {
+        return transactionMapper;
+    }
+
     private Mono<Credit> validateAndProcessPayment(CreditPaymentRequest request) {
         return findAndValidateCredit(request)
                 .zipWith(getNumberOfPaymentsMade(request.getCreditId()))
@@ -42,7 +53,7 @@ public class CreditPaymentService implements TransactionService<CreditPaymentReq
     private Mono<Credit> findAndValidateCredit(CreditPaymentRequest request) {
         return creditRepository.findByClientId(request.getClientId())
                 .switchIfEmpty(Mono.error(new BadRequestException("No se encontraron créditos asignados al cliente")))
-                .filter(credit -> credit.getStatus() == CreditStatus.ACTIVE && credit.getId().equals(request.getCreditId()))
+                .filter(credit -> credit.getCreditStatus() == CreditStatus.ACTIVE && credit.getId().equals(request.getCreditId()))
                 .switchIfEmpty(Mono.error(new BadRequestException("El cliente no cuenta con créditos activos")))
                 .single();
     }
@@ -75,7 +86,7 @@ public class CreditPaymentService implements TransactionService<CreditPaymentReq
     private Mono<Credit> updateCreditStatus(Credit credit, String creditId) {
         return getNumberOfPaymentsMade(creditId)
                 .map(paymentsMade -> {
-                    credit.setStatus(credit.checkStatus(paymentsMade));
+                    credit.setCreditStatus(credit.checkStatus(paymentsMade));
                     return credit;
                 })
                 .flatMap(creditRepository::save)

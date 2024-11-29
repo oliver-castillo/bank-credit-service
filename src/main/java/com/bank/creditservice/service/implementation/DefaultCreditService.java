@@ -1,4 +1,4 @@
-package com.bank.creditservice.service;
+package com.bank.creditservice.service.implementation;
 
 import com.bank.creditservice.exception.AlreadyExistsException;
 import com.bank.creditservice.exception.NotFoundException;
@@ -10,6 +10,7 @@ import com.bank.creditservice.model.enums.ClientType;
 import com.bank.creditservice.model.enums.CreditStatus;
 import com.bank.creditservice.repository.CreditRepository;
 import com.bank.creditservice.repository.TransactionRepository;
+import com.bank.creditservice.service.CreditService;
 import com.bank.creditservice.util.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +63,7 @@ public class DefaultCreditService implements CreditService {
         } else {
             return creditRepository.findByClientId(request.getClientId())
                     .filter(credit -> credit.getClientType() == ClientType.PERSONAL
-                            && credit.getStatus() == CreditStatus.ACTIVE)
+                            && credit.getCreditStatus() == CreditStatus.ACTIVE)
                     .count()
                     .handle((count, sink) -> {
                         if (count > 0) {

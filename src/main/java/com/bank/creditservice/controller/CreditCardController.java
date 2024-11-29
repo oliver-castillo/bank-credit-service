@@ -8,22 +8,30 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
 @RestController
+@RequestMapping(value = "credit-cards")
 public class CreditCardController {
     private final CreditCardService creditCardService;
 
-    @PostMapping(value = "credit-card")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<OperationResponse> save(@RequestBody @Valid CreditCardRequest request) {
         return creditCardService.save(request);
     }
 
-    @GetMapping(value = "credit-card/{id}")
+    @GetMapping(value = "{cardNumber}")
     @ResponseStatus(HttpStatus.OK)
-    public Mono<CreditCardResponse> findById(@PathVariable String id) {
-        return creditCardService.findById(id);
+    public Mono<CreditCardResponse> findByCardNumber(@PathVariable String cardNumber) {
+        return creditCardService.findByCardNumber(cardNumber);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public Flux<CreditCardResponse> findAll() {
+        return creditCardService.findAll();
     }
 }

@@ -1,16 +1,12 @@
 package com.bank.creditservice.model.dto.response;
 
-import com.bank.creditservice.model.enums.ClientType;
-
 public record CreditCardResponse(
         String id,
         String clientId,
         String cardNumber,
         String cvv,
-        ClientType clientType,
-        String status,
+        String creditCardStatus,
         Double creditLimit,
-        Double balanceToPay,
         String expirationDate,
         Boolean isEnabled
 ) {

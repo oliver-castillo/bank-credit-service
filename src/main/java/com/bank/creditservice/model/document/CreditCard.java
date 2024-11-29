@@ -18,7 +18,7 @@ public class CreditCard {
     private String clientId;
     private String cardNumber;
     private String cvv;
-    private CreditCardStatus status;
+    private CreditCardStatus creditCardStatus;
     private Double creditLimit;
     private LocalDate expirationDate;
     private Boolean isEnabled;
@@ -28,7 +28,7 @@ public class CreditCard {
         this.cvv = Generator.generateCvv();
         this.expirationDate = LocalDate.now().plusYears(1);
         this.isEnabled = true;
-        this.status = CreditCardStatus.UNPAID;
+        this.creditCardStatus = CreditCardStatus.UNPAID;
     }
 
     public CreditCardStatus checkStatus(double totalChargeAmount) {
